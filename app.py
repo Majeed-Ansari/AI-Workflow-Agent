@@ -1,3 +1,8 @@
+from src.embeddings import (
+    chunk_text,
+    create_vector_store,
+    save_vector_store
+)
 import streamlit as st
 from src.pdf_processor import (
     extract_text_from_pdf,
@@ -19,6 +24,7 @@ uploaded_file = st.file_uploader(
 if uploaded_file is not None:
 
     st.success("PDF uploaded successfully!")
+    
     saved_path = save_uploaded_file(uploaded_file)
 
     st.info(f"File saved at: {saved_path}")
@@ -28,6 +34,25 @@ if uploaded_file is not None:
 
     # Clean text
     cleaned_text = clean_text(raw_text)
+    
+    # Create chunks
+    chunks = chunk_text(cleaned_text)
+
+    st.subheader("✂️ Text Chunks")
+    st.write(f"Total Chunks Created: {len(chunks)}")
+
+    # Create vector store
+    vector_store = create_vector_store(chunks)
+    save_vector_store(vector_store)
+
+    st.success("✅ Vector database created successfully!")
+
+    st.subheader("📦 Sample Chunks")
+
+    for i, chunk in enumerate(chunks[:3]):
+
+        st.write(f"### Chunk {i+1}")
+        st.write(chunk)
 
     st.subheader("📚 Extracted & Cleaned Text")
 
@@ -37,7 +62,10 @@ if uploaded_file is not None:
         cleaned_text,
         height=400
     )
+
+else:
     st.write("Upload a PDF and extract text.")
+
     st.markdown("""
 ## 🔄 Workflow Pipeline
 
