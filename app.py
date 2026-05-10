@@ -1,3 +1,6 @@
+from src.research import search_arxiv_papers
+
+from src.chatbot import summarize_research_paper
 from src.embeddings import (
     chunk_text,
     create_vector_store,
@@ -15,18 +18,24 @@ from src.pdf_processor import (
     save_uploaded_file
 )
 
-# Page Configuration
+# =========================
+# PAGE CONFIGURATION
+# =========================
 st.set_page_config(
     page_title="AI Workflow Agent",
     page_icon="🤖",
     layout="wide"
 )
 
-# Initialize Chat History
+# =========================
+# SESSION STATE
+# =========================
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
+# =========================
 # SIDEBAR
+# =========================
 with st.sidebar:
 
     st.title("🤖 Multi-Agent AI Workflow Platform")
@@ -39,11 +48,13 @@ with st.sidebar:
 
     st.subheader("📌 Project Features")
 
+    st.write("✅ Multi PDF Upload")
     st.write("✅ PDF Processing")
     st.write("✅ Semantic Search")
     st.write("✅ Multi-Agent AI")
     st.write("✅ RAG Pipeline")
     st.write("✅ NVIDIA API Integration")
+    st.write("✅ Arxiv Research Search")
 
     st.markdown("---")
 
@@ -54,59 +65,107 @@ with st.sidebar:
     st.write("📧 Email Agent")
     st.write("💡 Insight Agent")
 
+    # =========================
+    # ARXIV SEARCH
+    # =========================
+    st.markdown("---")
+
+    st.subheader("🔬 AI Research Search")
+
+    research_query = st.text_input(
+        "Search Research Papers",
+        placeholder="Example: Large Language Models"
+    )
+
+# =========================
 # MAIN TITLE
+# =========================
 st.title("📄 AI Workflow Agent")
 
-st.write("Upload a PDF and interact with AI agents.")
+st.write("Upload PDF files and interact with AI agents.")
 
+# =========================
 # FILE UPLOADER
-uploaded_file = st.file_uploader(
-    "Upload your PDF",
-    type=["pdf"]
+# =========================
+uploaded_files = st.file_uploader(
+    "Upload PDF Files",
+    type=["pdf"],
+    accept_multiple_files=True
 )
 
+# =========================
 # MAIN WORKFLOW
-if uploaded_file is not None:
+# =========================
+if uploaded_files:
 
-    st.success("✅ PDF uploaded successfully!")
+    st.success("✅ PDFs uploaded successfully!")
 
-    # Save uploaded file
-    saved_path = save_uploaded_file(uploaded_file)
+    all_text = ""
+    pdf_names = []
 
-    st.info(f"📁 File saved at: {saved_path}")
+    # Process all uploaded PDFs
+    for uploaded_file in uploaded_files:
 
-    # Extract text
-    raw_text = extract_text_from_pdf(uploaded_file)
+        pdf_names.append(uploaded_file.name)
 
-    # Clean text
-    cleaned_text = clean_text(raw_text)
+        # Save PDF
+        saved_path = save_uploaded_file(uploaded_file)
 
-    # Create chunks
-    chunks = chunk_text(cleaned_text)
+        st.info(f"📁 File saved at: {saved_path}")
 
-    # Metrics Dashboard
+        # Extract text
+        raw_text = extract_text_from_pdf(uploaded_file)
+
+        # Clean text
+        cleaned_text = clean_text(raw_text)
+
+        # Combine all PDF text
+        all_text += f"\n\nDOCUMENT: {uploaded_file.name}\n\n"
+        all_text += cleaned_text
+
+    # =========================
+    # CREATE CHUNKS
+    # =========================
+    chunks = chunk_text(all_text)
+
+    # =========================
+    # METRICS DASHBOARD
+    # =========================
     col1, col2, col3 = st.columns(3)
 
     with col1:
         st.metric("📄 Chunks", len(chunks))
 
     with col2:
-        st.metric("🧠 AI Agents", 4)
+        st.metric("📚 PDFs", len(uploaded_files))
 
     with col3:
-        st.metric("⚡ Workflow", "Active")
+        st.metric("🧠 AI Agents", 4)
 
     st.markdown("---")
 
-    # Create vector store
+    # =========================
+    # UPLOADED DOCUMENTS
+    # =========================
+    st.subheader("📂 Uploaded Documents")
+
+    for pdf in pdf_names:
+        st.write(f"✅ {pdf}")
+
+    st.markdown("---")
+
+    # =========================
+    # CREATE VECTOR STORE
+    # =========================
     vector_store = create_vector_store(chunks)
 
-    # Save vector store
     save_vector_store(vector_store)
 
     st.success("✅ Vector database created successfully!")
 
-    # Expandable Chunk Viewer
+    # =========================
+    # EXPANDABLE CHUNK VIEWER
+    # =========================
     with st.expander("📦 View Text Chunks"):
 
         for i, chunk in enumerate(chunks[:5]):
@@ -115,18 +174,22 @@ if uploaded_file is not None:
             st.write(chunk)
             st.markdown("---")
 
-    # Extracted Text
+    # =========================
+    # EXTRACTED TEXT
+    # =========================
     st.subheader("📚 Extracted & Cleaned Text")
 
     st.text_area(
         "PDF Content",
-        cleaned_text,
+        all_text,
         height=300
     )
 
     st.markdown("---")
 
-    # AI Agent Selector
+    # =========================
+    # AI AGENT SELECTOR
+    # =========================
     st.subheader("🧠 Select AI Agent")
 
     agent_type = st.selectbox(
@@ -141,46 +204,62 @@ if uploaded_file is not None:
 
     # Agent Descriptions
     if agent_type == "Research Agent":
-        st.info("📘 Best for technical explanations and detailed analysis.")
+        st.info(
+            "📘 Best for technical explanations and detailed analysis."
+        )
 
     elif agent_type == "Summary Agent":
-        st.info("📝 Best for concise summaries and simplified explanations.")
+        st.info(
+            "📝 Best for concise summaries and simplified explanations."
+        )
 
     elif agent_type == "Email Agent":
-        st.info("📧 Generates professional email drafts from document context.")
+        st.info(
+            "📧 Generates professional email drafts from document context."
+        )
 
     elif agent_type == "Insight Agent":
-        st.info("💡 Extracts trends, insights, and observations.")
+        st.info(
+            "💡 Extracts trends, insights, and observations."
+        )
 
     st.markdown("---")
 
+    # =========================
     # CHATBOT SECTION
-    st.subheader("💬 Chat with Your PDF")
+    # =========================
+    st.subheader("💬 Chat with Your PDFs")
 
     user_question = st.text_area(
-        "💬 Ask Questions About Your Document",
-        placeholder="Example: Summarize this document or explain key findings...",
+        "💬 Ask Questions About Your Documents",
+        placeholder=(
+            "Example: Summarize the uploaded PDFs or explain key findings..."
+        ),
         height=120
     )
 
+    # =========================
     # AI RESPONSE BUTTON
+    # =========================
     if st.button("🚀 Generate AI Response"):
 
         if user_question:
 
-            with st.spinner("AI is analyzing your document..."):
+            with st.spinner(
+                "AI is analyzing your documents..."
+            ):
 
-                # Load saved vector DB
+                # Load vector DB
                 vector_store = load_vector_store()
 
-                # Generate AI response
+                # Generate answer
                 answer = ask_question(
                     vector_store,
                     user_question,
                     agent_type
                 )
 
-            # Store conversation history
+            # Save chat history
             st.session_state.chat_history.append(
                 {
                     "question": user_question,
@@ -189,7 +268,9 @@ if uploaded_file is not None:
                 }
             )
 
+    # =========================
     # DISPLAY CHAT HISTORY
+    # =========================
     if st.session_state.chat_history:
 
         st.markdown("---")
@@ -212,7 +293,7 @@ if uploaded_file is not None:
 
 else:
 
-    st.info("📄 Upload a PDF to start the AI workflow.")
+    st.info("📄 Upload PDFs to start the AI workflow.")
 
     st.markdown("""
 ## 🔄 Workflow Pipeline
@@ -220,9 +301,55 @@ else:
 PDF Upload → Text Extraction → Cleaning → Embeddings → FAISS Vector DB → Multi-Agent AI Chatbot
 """)
 
+# =========================
+# ARXIV RESEARCH SECTION
+# =========================
+if research_query:
+
+    st.markdown("---")
+
+    st.subheader("📚 Research Papers")
+
+    papers = search_arxiv_papers(research_query)
+
+    for paper in papers:
+
+        with st.container():
+
+            st.markdown(f"## {paper['title']}")
+
+            st.write(
+                f"👨‍🔬 Authors: {', '.join(paper['authors'])}"
+            )
+
+            st.write("### Abstract")
+            st.write(paper["summary"])
+
+            with st.spinner("Generating AI Summary..."):
+
+                ai_summary = summarize_research_paper(
+                    paper["summary"]
+                )
+
+            st.write("### 🤖 AI Summary")
+            st.write(ai_summary)
+
+            st.markdown(
+                f"[📄 Read Paper]({paper['pdf_url']})"
+            )
+
+            st.markdown("---")
+            
+            st.metric(
+                "📄 Papers Found",
+                len(papers)
+            )
+
+# =========================
 # FOOTER
+# =========================
 st.markdown("---")
 
 st.caption(
-    "Built using Streamlit, LangChain, FAISS, and OpenAI"
+    "Built using Streamlit, LangChain, FAISS, NVIDIA AI, and Arxiv API"
 )
