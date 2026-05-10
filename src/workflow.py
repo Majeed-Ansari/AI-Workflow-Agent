@@ -1,5 +1,5 @@
 st.markdown("""
-## 🔄 AI Workflow Pipeline
+# 🔄 Multi-Agent AI Workflow Pipeline
 
 PDF Upload  
 ↓  
@@ -11,7 +11,13 @@ Chunking
 ↓  
 Embeddings Generation  
 ↓  
-FAISS Vector Database  
+FAISS Vector Storage  
 ↓  
-Semantic Retrieval
+Semantic Retrieval  
+↓  
+Agent Selection  
+↓  
+Prompt Engineering  
+↓  
+OpenAI Response Generation
 """)

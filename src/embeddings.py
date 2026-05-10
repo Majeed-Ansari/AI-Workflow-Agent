@@ -6,8 +6,8 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 def chunk_text(text):
 
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=500,
-        chunk_overlap=100
+        chunk_size=1000,
+        chunk_overlap=200
     )
 
     chunks = text_splitter.split_text(text)
@@ -28,6 +28,22 @@ def create_vector_store(chunks):
 
     return vector_store
 
+
 def save_vector_store(vector_store):
 
     vector_store.save_local("faiss_index")
+
+
+def load_vector_store():
+
+    embedding_model = HuggingFaceEmbeddings(
+        model_name="sentence-transformers/all-MiniLM-L6-v2"
+    )
+
+    vector_store = FAISS.load_local(
+        "faiss_index",
+        embeddings=embedding_model,
+        allow_dangerous_deserialization=True
+    )
+
+    return vector_store
