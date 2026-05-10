@@ -1,23 +1,22 @@
 st.markdown("""
-# 🔄 Multi-Agent AI Workflow Pipeline
+## 🔄 AI Workflow Architecture
 
-PDF Upload  
-↓  
-Text Extraction  
-↓  
-Cleaning  
-↓  
-Chunking  
-↓  
-Embeddings Generation  
-↓  
-FAISS Vector Storage  
-↓  
-Semantic Retrieval  
-↓  
-Agent Selection  
-↓  
-Prompt Engineering  
-↓  
+```text
+PDF Upload
+    ↓
+Text Extraction
+    ↓
+Data Cleaning
+    ↓
+Chunking
+    ↓
+Embeddings Generation
+    ↓
+FAISS Vector Database
+    ↓
+Semantic Retrieval
+    ↓
+AI Agent Routing
+    ↓
 OpenAI Response Generation
 """)

@@ -15,25 +15,65 @@ from src.pdf_processor import (
     save_uploaded_file
 )
 
-st.set_page_config(page_title="AI Workflow Agent")
+# Page Configuration
+st.set_page_config(
+    page_title="AI Workflow Agent",
+    page_icon="🤖",
+    layout="wide"
+)
 
+# Initialize Chat History
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+
+# SIDEBAR
+with st.sidebar:
+
+    st.title("🤖 Multi-Agent AI Workflow Platform")
+
+    st.caption(
+        "AI-powered document intelligence system using RAG, FAISS, and NVIDIA AI"
+    )
+
+    st.markdown("---")
+
+    st.subheader("📌 Project Features")
+
+    st.write("✅ PDF Processing")
+    st.write("✅ Semantic Search")
+    st.write("✅ Multi-Agent AI")
+    st.write("✅ RAG Pipeline")
+    st.write("✅ NVIDIA API Integration")
+
+    st.markdown("---")
+
+    st.subheader("🧠 Available Agents")
+
+    st.write("📘 Research Agent")
+    st.write("📝 Summary Agent")
+    st.write("📧 Email Agent")
+    st.write("💡 Insight Agent")
+
+# MAIN TITLE
 st.title("📄 AI Workflow Agent")
-st.write("Upload a PDF and chat with it.")
 
-# File uploader
+st.write("Upload a PDF and interact with AI agents.")
+
+# FILE UPLOADER
 uploaded_file = st.file_uploader(
     "Upload your PDF",
     type=["pdf"]
 )
 
+# MAIN WORKFLOW
 if uploaded_file is not None:
 
-    st.success("PDF uploaded successfully!")
+    st.success("✅ PDF uploaded successfully!")
 
     # Save uploaded file
     saved_path = save_uploaded_file(uploaded_file)
 
-    st.info(f"File saved at: {saved_path}")
+    st.info(f"📁 File saved at: {saved_path}")
 
     # Extract text
     raw_text = extract_text_from_pdf(uploaded_file)
@@ -44,8 +84,19 @@ if uploaded_file is not None:
     # Create chunks
     chunks = chunk_text(cleaned_text)
 
-    st.subheader("✂️ Text Chunks")
-    st.write(f"Total Chunks Created: {len(chunks)}")
+    # Metrics Dashboard
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.metric("📄 Chunks", len(chunks))
+
+    with col2:
+        st.metric("🧠 AI Agents", 4)
+
+    with col3:
+        st.metric("⚡ Workflow", "Active")
+
+    st.markdown("---")
 
     # Create vector store
     vector_store = create_vector_store(chunks)
@@ -55,22 +106,25 @@ if uploaded_file is not None:
 
     st.success("✅ Vector database created successfully!")
 
-    # Sample chunks
-    st.subheader("📦 Sample Chunks")
+    # Expandable Chunk Viewer
+    with st.expander("📦 View Text Chunks"):
 
-    for i, chunk in enumerate(chunks[:3]):
+        for i, chunk in enumerate(chunks[:5]):
 
-        st.write(f"### Chunk {i+1}")
-        st.write(chunk)
+            st.write(f"### Chunk {i+1}")
+            st.write(chunk)
+            st.markdown("---")
 
-    # Show extracted text
+    # Extracted Text
     st.subheader("📚 Extracted & Cleaned Text")
 
     st.text_area(
         "PDF Content",
         cleaned_text,
-        height=400
+        height=300
     )
+
+    st.markdown("---")
 
     # AI Agent Selector
     st.subheader("🧠 Select AI Agent")
@@ -85,39 +139,90 @@ if uploaded_file is not None:
         ]
     )
 
-    st.info(f"Selected Agent: {agent_type}")
+    # Agent Descriptions
+    if agent_type == "Research Agent":
+        st.info("📘 Best for technical explanations and detailed analysis.")
+
+    elif agent_type == "Summary Agent":
+        st.info("📝 Best for concise summaries and simplified explanations.")
+
+    elif agent_type == "Email Agent":
+        st.info("📧 Generates professional email drafts from document context.")
+
+    elif agent_type == "Insight Agent":
+        st.info("💡 Extracts trends, insights, and observations.")
+
+    st.markdown("---")
 
     # CHATBOT SECTION
     st.subheader("💬 Chat with Your PDF")
 
-    user_question = st.text_input(
-        "Ask a question from the document"
+    user_question = st.text_area(
+        "💬 Ask Questions About Your Document",
+        placeholder="Example: Summarize this document or explain key findings...",
+        height=120
     )
 
-    if user_question:
+    # AI RESPONSE BUTTON
+    if st.button("🚀 Generate AI Response"):
 
-        with st.spinner("Thinking..."):
+        if user_question:
 
-            # Load saved FAISS vector DB
-            vector_store = load_vector_store()
+            with st.spinner("AI is analyzing your document..."):
 
-            # Ask AI
-            answer = ask_question(
-                vector_store,
-                user_question,
-                agent_type
+                # Load saved vector DB
+                vector_store = load_vector_store()
+
+                # Generate AI response
+                answer = ask_question(
+                    vector_store,
+                    user_question,
+                    agent_type
+                )
+
+            # Store conversation history
+            st.session_state.chat_history.append(
+                {
+                    "question": user_question,
+                    "answer": answer,
+                    "agent": agent_type
+                }
             )
 
-        st.subheader("🤖 AI Response")
+    # DISPLAY CHAT HISTORY
+    if st.session_state.chat_history:
 
-        st.write(answer)
+        st.markdown("---")
+
+        st.subheader("📜 Conversation History")
+
+        for chat in reversed(st.session_state.chat_history):
+
+            with st.container():
+
+                st.markdown(f"""
+### 🧑 User Question
+{chat['question']}
+
+### 🤖 {chat['agent']}
+{chat['answer']}
+""")
+
+                st.markdown("---")
 
 else:
 
-    st.write("Upload a PDF and extract text.")
+    st.info("📄 Upload a PDF to start the AI workflow.")
 
     st.markdown("""
 ## 🔄 Workflow Pipeline
 
-PDF Upload → Text Extraction → Cleaning → Embeddings → Vector DB → AI Chatbot
+PDF Upload → Text Extraction → Cleaning → Embeddings → FAISS Vector DB → Multi-Agent AI Chatbot
 """)
+
+# FOOTER
+st.markdown("---")
+
+st.caption(
+    "Built using Streamlit, LangChain, FAISS, and OpenAI"
+)
